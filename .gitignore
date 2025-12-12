@@ -1,16 +1,16 @@
-# Compiled class file
+# Compiled class files
 *.class
 
-# Log file
+# Log files
 *.log
 
 # BlueJ files
 *.ctxt
 
-# Mobile Tools for Java (J2ME)
+# Mobile Tools for Java
 .mtj.tmp/
 
-# Package Files #
+# Package files
 *.jar
 *.war
 *.nar
@@ -19,6 +19,32 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Virtual machine crash logs
 hs_err_pid*
 replay_pid*
+
+# Maven build output directory
+target/
+
+# Override to include the dependency-check report in the target directory
+!target/dependency-check-report.html
+
+# Maven backup files
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# Maven wrapper
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Eclipse project-specific files
+.project
+.classpath
+
+# inculde pom.xml
+!pom.xml
