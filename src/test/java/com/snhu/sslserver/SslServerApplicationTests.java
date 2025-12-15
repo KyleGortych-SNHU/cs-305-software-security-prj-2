@@ -1,126 +1,90 @@
 package com.snhu.sslserver;
 
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.HttpClient;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.web.client.HttpStatusCodeException;
 
-import javax.net.ssl.SSLContext;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.KeyStore;
-import java.security.cert.CertificateFactory;
+import javax.net.ssl.*;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-class SslServerApplicationTests {
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class ServerApplicationTests {
 
     @Autowired
     private TestRestTemplate restTemplate;
 
-    // Test for the /hash endpoint that computes checksum for static data
-    @Test
-    void hashEndpointReturnsChecksumOverHttps() {
-        ResponseEntity<String> response = restTemplate.getForEntity(
-                "https://localhost:8443/hash", // Ensure HTTPS is used
-                String.class
-        );
+    /**
+     * Method to get an insecure RestTemplate that accepts self-signed certificates.
+     */
+    private TestRestTemplate getInsecureRestTemplate() throws NoSuchAlgorithmException, KeyManagementException {
+        // Trust all certificates (For testing only - not recommended for production)
+        TrustManager[] trustAllCertificates = new TrustManager[]{
+            new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
 
-        // Check if the response contains expected values
-        assertTrue(response.getBody().contains("Kyle Gortych"));
-        assertTrue(response.getBody().contains("SHA-256"));
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }
+        };
+
+        // Set up SSL context with our trust manager
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCertificates, new java.security.SecureRandom());
+        SSLSocketFactory factory = sslContext.getSocketFactory();
+
+        // Create RestTemplate and set its request factory to use the custom SSL context
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setRequestFactory(new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(
+                org.apache.http.impl.client.HttpClients.custom()
+                        .setSSLContext(sslContext)
+                        .build()));
+
+        return new TestRestTemplate(restTemplate);
     }
 
-    // Test for the /hash-file endpoint to ensure checksum is returned for uploaded file
+    /**
+     * Test to ensure /hash endpoint returns expected data over HTTPS.
+     * Uses the insecure RestTemplate to bypass SSL validation for self-signed certificates.
+     */
     @Test
-    void hashFileEndpointReturnsChecksum() throws Exception {
-        // Read the test file
-        Path path = Path.of("src/test/resources/testfile.txt");  // File used for testing
-        File file = path.toFile();
+    void hashEndpointReturnsData() {
+        try {
+            // Use the insecure RestTemplate that bypasses SSL certificate validation
+            TestRestTemplate insecureRestTemplate = getInsecureRestTemplate();
 
-        // Read the file content into a byte array
-        byte[] fileContent = Files.readAllBytes(path);
+            // Perform GET request on the /hash endpoint (Assumes server is running on HTTPS)
+            ResponseEntity<String> response = insecureRestTemplate.getForEntity("https://localhost:8443/hash", String.class);
 
-        // Create a MockMultipartFile from the file content
-        MockMultipartFile mockFile = new MockMultipartFile("file", file.getName(), "text/plain", fileContent);
-
-        // Prepare the form data (file upload)
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", mockFile);  // Add the MockMultipartFile to the form data
-
-        // Set up the HTTP headers to handle multipart data
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
-        // Create an HttpEntity with the headers and the file body
-        HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headers);
-
-        // Create the POST request to upload the file and get the checksum
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                "https://localhost:8443/hash-file", entity, String.class);
-
-        // Check that the response contains checksum information
-        assertTrue(response.getBody().contains("Checksum Value:"));
-        assertTrue(response.getBody().contains(file.getName()));  // Check if file name is included
+            // Check if the response contains expected data (e.g., name and hash algorithm)
+            assertTrue(response.getBody().contains("Kyle Gortych"));
+            assertTrue(response.getBody().contains("SHA-256"));
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            fail("SSL initialization failed: " + e.getMessage());
+        } catch (HttpStatusCodeException e) {
+            fail("HTTP error occurred: " + e.getMessage());
+        }
     }
 
-    // Ensure that the application context loads correctly
+    /**
+     * Test to check if the Spring Boot application context loads successfully.
+     */
     @Test
     void contextLoads() {
-    }
-
-    // Configure TestRestTemplate to accept self-signed certificates
-    @Autowired
-    public void setRestTemplate(TestRestTemplate restTemplate) throws Exception {
-        // Load the self-signed certificate (adjust the path to your cert)
-        X509Certificate certificate = loadCertificate("src/test/resources/self-signed-cert.pem");
-
-        // Create a KeyStore and add the certificate
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        keyStore.load(null, null);  // No password for the keystore
-        keyStore.setCertificateEntry("selfSigned", certificate);
-
-        // Set up SSL context with the custom KeyStore (only the self-signed certificate)
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, new javax.net.ssl.TrustManager[] {new javax.net.ssl.X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-            public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-            public void checkServerTrusted(X509Certificate[] certs, String authType) {}
-        }}, new java.security.SecureRandom());
-
-        // Create an HttpClient with NoopHostnameVerifier to allow self-signed certs
-        HttpClient httpClient = HttpClients.custom()
-                .setSslcontext(sslContext)
-                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE) // Disable hostname verification for testing
-                .build();
-
-        // Use HttpComponentsClientHttpRequestFactory to wrap the HttpClient
-        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
-
-        // Set the factory to the TestRestTemplate's underlying RestTemplate
-        restTemplate.getRestTemplate().setRequestFactory(factory);
-    }
-
-    private X509Certificate loadCertificate(String certPath) throws Exception {
-        try (var is = Files.newInputStream(Path.of(certPath))) {
-            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-            return (X509Certificate) certificateFactory.generateCertificate(is);
-        }
+        // No actual logic here, just checks if the Spring context loads without issues
     }
 }

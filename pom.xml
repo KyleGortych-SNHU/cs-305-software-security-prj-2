@@ -32,14 +32,27 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+            <!-- Exclude JUnit Vintage Engine (JUnit 4 support) -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
-        <!-- HttpClient 5.x (Ensure version compatibility) -->
+        <!-- Apache HttpClient 5.x for handling custom SSLContext -->
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
-            <version>5.5.1</version> <!-- Update to latest version if needed -->
+            <version>5.2</version> <!-- Latest stable version of HttpClient 5.x -->
         </dependency>
+
+        <!-- Optional Spring Data REST Starter (if you need to expose repositories as REST) -->
+        <!-- <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-rest</artifactId>
+        </dependency> -->
     </dependencies>
 
     <build>
@@ -68,5 +81,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
