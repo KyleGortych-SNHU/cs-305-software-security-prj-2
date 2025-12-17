@@ -1,58 +1,47 @@
-/* style.css */
-
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    max-width: 600px;
+    margin: 50px auto;
     padding: 20px;
 }
 
 h1 {
     color: #333;
-    text-align: center;
 }
 
 form {
-    margin-top: 20px;
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 300px;
-    margin: 0 auto; /* Center the form */
+    margin: 20px 0;
 }
 
 label {
-    font-size: 1.2em;
     display: block;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
+    font-weight: bold;
 }
 
 input[type="file"] {
-    margin: 10px 0;
-    padding: 5px;
-    width: 100%;
+    margin-bottom: 10px;
 }
 
 button {
-    background-color: #4CAF50;
+    background-color: #007bff;
     color: white;
-    border: none;
     padding: 10px 20px;
-    text-align: center;
-    cursor: pointer;
+    border: none;
     border-radius: 4px;
-    width: 100%;
+    cursor: pointer;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #0056b3;
 }
 
 #result {
     margin-top: 20px;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    white-space: pre-line; /* This preserves newlines from \n */
+    word-break: break-all; /* This ensures long checksums wrap */
 }

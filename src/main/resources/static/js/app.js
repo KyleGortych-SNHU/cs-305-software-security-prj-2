@@ -11,22 +11,29 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append("file", fileInput.files[0]);
 
         // Loading message
-        resultContainer.innerHTML = "Uploading...";
+        resultContainer.textContent = "Uploading...";
 
         // Send the file to the backend
         fetch('https://localhost:8443/hash-file', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.text())
+        .then(response => response.json()) // Parse JSON response
         .then(data => {
-            // Display the checksum result from the server
-            resultContainer.innerHTML = data;
+            if (data.error) {
+                resultContainer.textContent = data.error; // Show error message if present
+            } else {
+                // Display the checksum result safely using textContent (no XSS risk)
+                resultContainer.textContent = 
+                    `File Name: ${data.filename}\n` +
+                    `Algorithm: ${data.algorithm}\n` +
+                    `Checksum: ${data.checksum}`;
+            }
         })
         .catch(error => {
-            // To handle errors that occur during the fetch request
+            // Handle errors in the fetch request
             console.error('Error:', error);
-            resultContainer.innerHTML = "An error occurred!";
+            resultContainer.textContent = "An error occurred!";
         });
     });
 });
