@@ -79,6 +79,7 @@
 					</execution>
 				</executions>
 				<configuration>
+          <skip>${skip.owasp.dependency.check}</skip>
 					<nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
 				</configuration>
 			</plugin>
