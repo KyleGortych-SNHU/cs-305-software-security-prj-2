@@ -2,10 +2,12 @@ package com.snhu.sslserver;
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.ResponseEntity;
+
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,49 +15,61 @@ import java.util.Map;
 @RestController
 public class ServerController {
 
+    private static final long MAX_FILE_SIZE = 10_000_000; // 10 MB
+    private static final String HASH_ALGORITHM = "SHA-256";
+
     @PostMapping("/hash-file")
-    public ResponseEntity<Map<String, String>> hashFile(@RequestParam("file") MultipartFile file) {
-        String hash = "";
-        String algorithmUsed = "SHA-256";
+    public ResponseEntity<Map<String, String>> hashFile(
+            @RequestParam("file") MultipartFile file) {
+
         Map<String, String> response = new HashMap<>();
 
+        // Input Validation
+        if (file == null || file.isEmpty()) {
+            response.put("error", "Uploaded file is empty.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            response.put("error", "File exceeds maximum allowed size.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        // Sanitize filename to prevent injection & traversal issues
+        String safeFilename = Paths.get(file.getOriginalFilename())
+                .getFileName()
+                .toString()
+                .replaceAll("[^a-zA-Z0-9._-]", "_"); // replaces unsafe characters
+
         try {
-            // Initialize the MessageDigest with the selected algorithm
-            MessageDigest digest = MessageDigest.getInstance(algorithmUsed);
-            
-            // Get the InputStream once and use try-with-resources to ensure it's closed
+            MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
+
             try (InputStream inputStream = file.getInputStream()) {
                 byte[] buffer = new byte[8192];
                 int bytesRead;
-
-                // Read file 
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     digest.update(buffer, 0, bytesRead);
                 }
             }
 
-            // Get final hash value
             byte[] hashBytes = digest.digest();
-            StringBuilder sb = new StringBuilder();
-
-            // Convert the byte array into a hexadecimal string
+            StringBuilder checksum = new StringBuilder();
             for (byte b : hashBytes) {
-                sb.append(String.format("%02x", b));
+                checksum.append(String.format("%02x", b));
             }
 
-            hash = sb.toString();
+            response.put("filename", safeFilename);
+            response.put("algorithm", HASH_ALGORITHM);
+            response.put("checksum", checksum.toString());
+
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            response.put("error", "Error calculating checksum: " + e.getMessage());
-            return ResponseEntity.status(500).body(response); // Return error status
+            // Log internally; do not expose stack traces
+            System.err.println("Checksum calculation failed: " + e.getMessage());
+
+            response.put("error", "Unable to process uploaded file.");
+            return ResponseEntity.status(500).body(response);
         }
-
-        // Return the result as JSON
-        response.put("filename", file.getOriginalFilename());
-        response.put("algorithm", algorithmUsed);
-        response.put("checksum", hash);
-
-        return ResponseEntity.ok(response); // Return successful response
     }
 }
