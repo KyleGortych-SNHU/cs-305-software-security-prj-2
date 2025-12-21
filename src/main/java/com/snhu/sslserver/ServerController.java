@@ -6,8 +6,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.ResponseEntity;
 
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,9 +37,7 @@ public class ServerController {
         }
 
         // Sanitize filename to prevent injection & traversal issues
-        String safeFilename = Paths.get(file.getOriginalFilename())
-                .getFileName()
-                .toString()
+        String safeFilename = FilenameUtils.getName(file.getOriginalFilename())
                 .replaceAll("[^a-zA-Z0-9._-]", "_"); // replaces unsafe characters
 
         try {
