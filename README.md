@@ -19,33 +19,33 @@ keytool -export -alias selfsigned -storepass SNHU12 -file server.cer -keystore k
 ### Successfully ran 
 
 <details>
-    <summary>Click to view</summary>
+<summary>Click to view</summary>
 
-    <div align="center">
-      <img src="https://raw.githubusercontent.com/KyleGortych-SNHU/cs-305-software-security-prj-2/refs/heads/main/screenshot1.jpg" width="100%" alt="img">
-    </div>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/KyleGortych-SNHU/cs-305-software-security-prj-2/refs/heads/main/screenshot1.jpg" width="100%" alt="img">
+</div>
 
 </details>
 
 ### OWASP Dependecy Check Results
 
 <details>
-    <summary>Click to view</summary>
+<summary>Click to view</summary>
 
-    <div align="center">
-      <img src="https://raw.githubusercontent.com/KyleGortych-SNHU/cs-305-software-security-prj-2/refs/heads/main/screenshot2.jpg" width="100%" alt="img">
-    </div>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/KyleGortych-SNHU/cs-305-software-security-prj-2/refs/heads/main/screenshot2.jpg" width="100%" alt="img">
+</div>
 
 </details>
 
 ### Example of SAST Usage
 
 <details>
-    <summary>Click to view</summary>
+<summary>Click to view</summary>
 
-    <div align="center">
-      <img src="https://raw.githubusercontent.com/KyleGortych-SNHU/cs-305-software-security-prj-2/refs/heads/main/screenshot3.jpg" width="100%" alt="img">
-    </div>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/KyleGortych-SNHU/cs-305-software-security-prj-2/refs/heads/main/screenshot3.jpg" width="100%" alt="img">
+</div>
 
 </details>
 
